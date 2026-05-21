@@ -1,24 +1,26 @@
 /**
  * NERO CLUB FITNESS — Generadores de datos para gráficos
- * En producción estos datos vendrán de Supabase (views analíticas).
- * En demo generamos datos mock realistas.
+ * - ingresos: suma real de precios de planes vendidos en el período
+ * - clientes: cantidad de planes vendidos (no personas únicas)
+ * En producción estos datos vendrán de Supabase views analíticas.
  */
 
 const PLAN_PRICES = { 1: 29900, 2: 79900, 3: 149900, 4: 269900 }
+// Precios reales para mock data realista
+const PRICES_ARR = [29900, 79900, 149900, 269900]
+const randPrice  = () => PRICES_ARR[Math.floor(Math.random() * PRICES_ARR.length)]
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 const addDays = (date, days) => {
-  const d = new Date(date)
-  d.setDate(d.getDate() + days)
-  return d
+  const d = new Date(date); d.setDate(d.getDate() + days); return d
 }
 
 const formatLabel = (date, granularity) => {
   const d = new Date(date)
-  if (granularity === 'day')   return d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })
-  if (granularity === 'week')  return d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })
-  return d.toLocaleDateString('es-CL', { month: 'short', year: '2-digit' })
+  if (granularity === 'day')  return d.toLocaleDateString('es-CL', { day:'2-digit', month:'short' })
+  if (granularity === 'week') return d.toLocaleDateString('es-CL', { day:'2-digit', month:'short' })
+  return d.toLocaleDateString('es-CL', { month:'short', year:'2-digit' })
 }
 
 const getGranularity = (days) => {
@@ -27,75 +29,76 @@ const getGranularity = (days) => {
   return 'month'
 }
 
-const getStep = (granularity) => {
-  if (granularity === 'day')   return 1
-  if (granularity === 'week')  return 7
-  return 30
+const getStep = (g) => g==='day'?1:g==='week'?7:30
+
+// Mock: genera cantidad realista de planes vendidos por bucket
+const mockPlanes = (i, total) => {
+  const progress = i / Math.max(total-1, 1)
+  const trend    = 1 + progress * 2 // crecimiento hacia el final
+  return Math.max(0, Math.round((Math.random() * trend * 1.5)))
 }
 
-// Genera ruido gaussiano aproximado para curvas realistas
-const noise = (base, variance) => Math.max(0, base + (Math.random() - 0.5) * variance * 2)
-
-// ── Función principal: ventas totales en el tiempo ────────────────────────────
+// ── Ventas totales en el tiempo ───────────────────────────────────────────────
 
 export const generateSalesTimeSeries = (clients, days) => {
-  const granularity = getGranularity(days)
-  const step = getStep(granularity)
-  const now = new Date()
+  const gran      = getGranularity(days)
+  const step      = getStep(gran)
+  const now       = new Date()
   const startDate = addDays(now, -days)
-  const buckets = new Map()
+  const buckets   = new Map()
 
-  // Crear buckets vacíos
+  // Crear buckets vacíos ordenados
   let cur = new Date(startDate)
   while (cur <= now) {
-    const key = formatLabel(cur, granularity)
-    if (!buckets.has(key)) buckets.set(key, { fecha: key, ingresos: 0, clientes: 0, _date: new Date(cur) })
+    const key = formatLabel(cur, gran)
+    if (!buckets.has(key)) buckets.set(key, { fecha: key, ingresos: 0, clientes: 0 })
     cur = addDays(cur, step)
   }
 
-  // Llenar con clientes reales
+  // Llenar con datos reales de clientes
+  let hasReal = false
   clients.forEach(c => {
     const d = new Date(c.startDate)
     if (d >= startDate && d <= now) {
-      const key = formatLabel(d, granularity)
+      const key = formatLabel(d, gran)
       if (buckets.has(key)) {
         const b = buckets.get(key)
-        b.ingresos += PLAN_PRICES[c.planId] || 0
-        b.clientes += 1
+        b.ingresos += PLAN_PRICES[c.planId] || 0  // suma real del precio del plan
+        b.clientes += 1                             // cantidad de planes vendidos
+        hasReal = true
       }
     }
   })
 
-  // Rellenar buckets vacíos con datos mock realistas para que el gráfico se vea bien
   const arr = Array.from(buckets.values())
-  const hasRealData = arr.some(b => b.clientes > 0)
 
-  if (!hasRealData) {
-    // Generar curva de crecimiento mock para modo demo
+  // Si no hay datos reales en el rango, generar mock realista
+  if (!hasReal) {
     arr.forEach((b, i) => {
-      const progress = i / arr.length
-      const trend = 50000 + progress * 80000
-      b.ingresos = Math.round(noise(trend, 25000) / 1000) * 1000
-      b.clientes = Math.max(0, Math.round(noise(2 + progress * 3, 1.5)))
+      const planes    = mockPlanes(i, arr.length)
+      // Ingresos = suma de precios reales de planes mock
+      let ingresos    = 0
+      for (let k = 0; k < planes; k++) ingresos += randPrice()
+      b.clientes = planes
+      b.ingresos = ingresos
     })
   }
 
-  return arr.map(({ fecha, ingresos, clientes }) => ({ fecha, ingresos, clientes }))
+  return arr
 }
 
-// ── Ventas por vendedor en el tiempo ─────────────────────────────────────────
+// ── Ventas por vendedor (incluye 'online') ────────────────────────────────────
 
 export const generateVendorComparison = (clients, vendors, days) => {
-  const granularity = getGranularity(days)
-  const step = getStep(granularity)
-  const now = new Date()
+  const gran      = getGranularity(days)
+  const step      = getStep(gran)
+  const now       = new Date()
   const startDate = addDays(now, -days)
-  const buckets = new Map()
+  const buckets   = new Map()
 
-  // Crear buckets
   let cur = new Date(startDate)
   while (cur <= now) {
-    const key = formatLabel(cur, granularity)
+    const key = formatLabel(cur, gran)
     if (!buckets.has(key)) {
       const obj = { fecha: key }
       vendors.forEach(v => { obj[v.name] = 0 })
@@ -104,29 +107,33 @@ export const generateVendorComparison = (clients, vendors, days) => {
     cur = addDays(cur, step)
   }
 
-  // Llenar con datos reales
+  let hasReal = false
   clients.forEach(c => {
     const d = new Date(c.startDate)
     if (d >= startDate && d <= now) {
-      const key = formatLabel(d, granularity)
+      const key    = formatLabel(d, gran)
       const vendor = vendors.find(v => v.id === c.vendorId)
       if (buckets.has(key) && vendor) {
         buckets.get(key)[vendor.name] += PLAN_PRICES[c.planId] || 0
+        hasReal = true
       }
     }
   })
 
   const arr = Array.from(buckets.values())
-  const hasData = arr.some(b => vendors.some(v => b[v.name] > 0))
 
-  if (!hasData) {
-    // Mock con curvas distintas por vendedor
+  if (!hasReal) {
     arr.forEach((b, i) => {
-      const progress = i / arr.length
+      const progress = i / Math.max(arr.length-1, 1)
       vendors.forEach((v, vi) => {
-        const base = 30000 + vi * 15000 + progress * 40000
-        const phase = vi * 0.7
-        b[v.name] = Math.round(noise(base + Math.sin(progress * 4 + phase) * 15000, 12000) / 1000) * 1000
+        // Cada vendor tiene tendencia y fase distintas
+        const base  = 60000 + vi * 30000 + progress * 90000
+        const phase = vi * 1.1
+        const wave  = Math.sin(progress * 4 + phase) * 30000
+        const planes = Math.max(0, Math.round(Math.random() * (1.5 + progress)))
+        let   total  = 0
+        for (let k = 0; k < planes; k++) total += randPrice()
+        b[v.name] = total || 0
       })
     })
   }
@@ -134,56 +141,53 @@ export const generateVendorComparison = (clients, vendors, days) => {
   return arr
 }
 
-// ── Churn rate en el tiempo ───────────────────────────────────────────────────
+// ── Churn rate ────────────────────────────────────────────────────────────────
 
 export const generateChurnData = (clients, days) => {
-  const granularity = getGranularity(days)
-  const step = getStep(granularity)
-  const now = new Date()
+  const gran      = getGranularity(days)
+  const step      = getStep(gran)
+  const now       = new Date()
   const startDate = addDays(now, -days)
-  const result = []
-
-  let cur = new Date(startDate)
-  let idx = 0
-  const totalBuckets = Math.ceil(days / step)
+  const result    = []
+  let   cur       = new Date(startDate)
+  let   idx       = 0
+  const totalB    = Math.ceil(days / step)
 
   while (cur <= now) {
     const bucketEnd = addDays(cur, step)
+
     const active = clients.filter(c => {
-      const end = new Date(c.startDate)
-      // Simular fecha de vencimiento
-      const dur = [1, 3, 6, 12][c.planId - 1] || 1
-      end.setMonth(end.getMonth() + dur)
+      const dur = [1,3,6,12][c.planId-1] || 1
+      const end = new Date(c.startDate); end.setMonth(end.getMonth()+dur)
       return new Date(c.startDate) <= cur && end >= cur
     }).length
 
     const churned = clients.filter(c => {
-      const end = new Date(c.startDate)
-      const dur = [1, 3, 6, 12][c.planId - 1] || 1
-      end.setMonth(end.getMonth() + dur)
+      const dur = [1,3,6,12][c.planId-1] || 1
+      const end = new Date(c.startDate); end.setMonth(end.getMonth()+dur)
       return end >= cur && end < bucketEnd
     }).length
 
-    const churnRate = active > 0 ? Math.round((churned / active) * 100 * 10) / 10 : 0
+    const churnRate = active > 0 ? Math.round((churned/active)*100*10)/10 : 0
 
-    // En demo, agregar mock si no hay suficientes datos
-    const mockBase = 5 + Math.sin(idx / totalBuckets * Math.PI * 2) * 3
+    // Mock si no hay suficientes datos reales
+    const mockActive  = Math.round(15 + idx*0.8 + Math.random()*5)
+    const mockChurned = Math.max(0, Math.round(1.5 + Math.sin(idx/totalB*Math.PI*3)*1.5 + Math.random()))
+    const mockRate    = mockActive > 0 ? Math.round((mockChurned/mockActive)*100*10)/10 : 0
+
     result.push({
-      fecha: formatLabel(cur, granularity),
-      activos: active > 0 ? active : Math.round(noise(20 + idx * 0.5, 5)),
-      churned: churned > 0 ? churned : Math.max(0, Math.round(noise(mockBase, 2))),
-      churnRate: churnRate > 0 ? churnRate : Math.round(noise(mockBase, 1.5) * 10) / 10,
+      fecha:     formatLabel(cur, gran),
+      activos:   active   > 0 ? active   : mockActive,
+      churned:   churned  > 0 ? churned  : mockChurned,
+      churnRate: churnRate > 0 ? churnRate : mockRate,
     })
 
-    cur = addDays(cur, step)
-    idx++
+    cur = addDays(cur, step); idx++
   }
 
   return result
 }
 
-// ── Vendor: ventas propias en el tiempo ───────────────────────────────────────
+// ── Alias para vendor dashboard ───────────────────────────────────────────────
 
-export const generateVendorSales = (myClients, days) => {
-  return generateSalesTimeSeries(myClients, days)
-}
+export const generateVendorSales = (myClients, days) => generateSalesTimeSeries(myClients, days)

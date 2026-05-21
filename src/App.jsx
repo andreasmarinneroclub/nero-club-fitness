@@ -53,6 +53,9 @@ const DATE_RANGES = [
 const TODAY = new Date().toISOString().split('T')[0]
 const uid   = () => Math.random().toString(36).slice(2,9)
 
+// Vendor virtual para inscripciones desde el sitio web (sin vendedor físico)
+const ONLINE_VENDOR = { id:'online', name:'Venta Online', email:'sitio web', isVirtual:true }
+
 // Demo credentials — usados SOLO para modo mock, nunca mostrados en el formulario
 const _DEMO = {
   admin:   { email:'admin@neroclub.cl',   password:'admin123',   id:'admin', name:'Carlos Nero', role:'admin' },
@@ -62,13 +65,16 @@ const _DEMO = {
   ],
 }
 
-const INIT_VENDORS = _DEMO.vendors.map(({ password: _p, ...v }) => v) // sin contraseña en estado
+// ONLINE_VENDOR siempre presente, no se puede eliminar
+const INIT_VENDORS = [ONLINE_VENDOR, ..._DEMO.vendors.map(({ password: _p, ...v }) => v)]
 const INIT_CLIENTS = [
   {id:'c1',name:'Matías Rodríguez',email:'matias@gmail.com',age:28,height:178,weight:80,goal:'Ganar masa muscular',  planId:3,startDate:'2025-03-01',vendorId:'v1'},
   {id:'c2',name:'Sofía Herrera',   email:'sofia@gmail.com', age:24,height:162,weight:58,goal:'Bajar de peso',        planId:1,startDate:'2025-04-15',vendorId:'v2'},
   {id:'c3',name:'Tomás Fernández', email:'tomas@gmail.com', age:32,height:182,weight:90,goal:'Mejorar condición física',planId:4,startDate:'2025-01-10',vendorId:'v1'},
   {id:'c4',name:'Camila Muñoz',    email:'camila@gmail.com',age:26,height:165,weight:62,goal:'Tonificar cuerpo',    planId:2,startDate:'2025-05-01',vendorId:'v2'},
   {id:'c5',name:'Benjamín Torres', email:'ben@gmail.com',   age:30,height:175,weight:75,goal:'Fitness general',     planId:3,startDate:'2025-04-20',vendorId:'v1'},
+  // Ejemplo de venta online (sin vendedor físico)
+  {id:'c6',name:'Lucía Campos',    email:'lucia@gmail.com', age:22,height:160,weight:55,goal:'Tonificar cuerpo',    planId:2,startDate:'2025-05-10',vendorId:'online'},
 ]
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -195,14 +201,14 @@ const ChartCard = ({title, subtitle, children, action}) => (
 )
 
 // ── CustomTooltip ────────────────────────────────────────────────────────────
-const ChartTooltip = ({active,payload,label,formatter}) => {
-  if (!active||!payload?.length) return null
+const ChartTooltip = ({active, payload, label, formatter}) => {
+  if (!active || !payload?.length) return null
   return (
-    <div style={{background:B.black,border:`1px solid rgba(255,255,255,0.1)`,borderRadius:8,padding:'10px 14px',fontSize:12}}>
-      <div style={{color:'rgba(255,255,255,0.5)',marginBottom:6,letterSpacing:1}}>{label}</div>
-      {payload.map((p,i) => (
-        <div key={i} style={{color:p.color,fontWeight:600}}>
-          {p.name}: {formatter ? formatter(p.value) : p.value}
+    <div style={{background:B.black,border:'1px solid rgba(255,255,255,0.12)',borderRadius:8,padding:'10px 14px',fontSize:12,minWidth:160}}>
+      <div style={{color:'rgba(255,255,255,0.45)',marginBottom:6,letterSpacing:1,fontSize:11}}>{label}</div>
+      {payload.map((p, i) => (
+        <div key={i} style={{color:p.color,fontWeight:600,marginBottom:2}}>
+          {p.name}: {formatter ? formatter(p.value, p.name) : p.value}
         </div>
       ))}
     </div>
@@ -284,11 +290,16 @@ const Landing = ({clients, setClients, onLoginClick}) => {
 
     // 🔌 SUPABASE:
     // const { data: authData } = await supabase.auth.signUp({ email: form.email, password: uid() })
-    // await supabase.from('clients').insert({ id: authData.user.id, ...form, plan_id: selPlan, start_date: TODAY })
+    // await supabase.from('clients').insert({ id: authData.user.id, ...form, plan_id: selPlan, start_date: TODAY, vendor_id: 'online' })
     // await supabase.functions.invoke('welcome-email', { body: { clientName: form.name, clientEmail: form.email, planName: plan(selPlan)?.name, endDate: ... } })
 
     await new Promise(r=>setTimeout(r,800))
-    setClients(p=>[...p,{id:uid(),...form,age:parseInt(form.age)||0,height:parseInt(form.height)||0,weight:parseFloat(form.weight)||0,planId:selPlan,startDate:TODAY,vendorId:null}])
+    setClients(p=>[...p,{
+      id:uid(), ...form,
+      age:parseInt(form.age)||0, height:parseInt(form.height)||0, weight:parseFloat(form.weight)||0,
+      planId:selPlan, startDate:TODAY,
+      vendorId:'online', // siempre 'online' para inscripciones web
+    }])
     setSubmitted(true); setBusy(false)
   }
 
@@ -418,7 +429,10 @@ const AdminDash = ({user, vendors, clients, setVendors, setClients, onLogout}) =
   const active     = clients.filter(isActive).length
   const vc         = vid => clients.filter(c=>c.vendorId===vid)
   const vr         = vid => vc(vid).reduce((s,c)=>s+(plan(c.planId)?.price||0),0)
-  const vname      = id => id?(vendors.find(v=>v.id===id)?.name||'—'):'Directo web'
+  const vname      = id => {
+    if (!id || id==='online') return 'Venta Online'
+    return vendors.find(v=>v.id===id)?.name || '—'
+  }
 
   // Chart data memoized
   const salesData   = useMemo(()=>generateSalesTimeSeries(clients, range), [clients, range])
@@ -492,18 +506,24 @@ const AdminDash = ({user, vendors, clients, setVendors, setClients, onLogout}) =
             {/* Gráfico 1: Ventas totales en el tiempo */}
             <ChartCard
               title="Ventas totales"
-              subtitle={`Ingresos y nuevos clientes — últimos ${DATE_RANGES.find(r=>r.days===range)?.label}`}
+              subtitle={`Ingresos CLP y planes vendidos — últimos ${DATE_RANGES.find(r=>r.days===range)?.label}`}
             >
               <ResponsiveContainer width="100%" height={220}>
                 <LineChart data={salesData} margin={{top:5,right:20,bottom:5,left:0}}>
                   <CartesianGrid strokeDasharray="3 3" stroke={B.gray100}/>
                   <XAxis dataKey="fecha" tick={{fontSize:10,fill:B.gray400}} interval="preserveStartEnd"/>
                   <YAxis yAxisId="left" tick={{fontSize:10,fill:B.gray400}} tickFormatter={clpShort} width={60}/>
-                  <YAxis yAxisId="right" orientation="right" tick={{fontSize:10,fill:B.gray400}} width={30}/>
-                  <Tooltip content={<ChartTooltip formatter={(v,name)=>name==='ingresos'?clp(v):`${v} cliente${v!==1?'s':''}`}/>}/>
+                  <YAxis yAxisId="right" orientation="right" tick={{fontSize:10,fill:B.gray400}} tickFormatter={v=>`${v}u`} width={35}/>
+                  <Tooltip content={
+                    <ChartTooltip formatter={(v,name)=>
+                      name==='ingresos CLP' ? clp(v) : `${v} plan${v!==1?'es':''}`
+                    }/>
+                  }/>
                   <Legend wrapperStyle={{fontSize:12}}/>
-                  <Line yAxisId="left" type="monotone" dataKey="ingresos" stroke={B.blue} strokeWidth={2} dot={false} name="ingresos"/>
-                  <Line yAxisId="right" type="monotone" dataKey="clientes" stroke="#00C6FF" strokeWidth={2} dot={false} name="clientes"/>
+                  <Line yAxisId="left"  type="monotone" dataKey="ingresos" name="ingresos CLP"
+                    stroke={B.blue} strokeWidth={2} dot={false} activeDot={{r:4}}/>
+                  <Line yAxisId="right" type="monotone" dataKey="clientes" name="planes vendidos"
+                    stroke="#00C6FF" strokeWidth={2} dot={false} activeDot={{r:4}}/>
                 </LineChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -511,18 +531,20 @@ const AdminDash = ({user, vendors, clients, setVendors, setClients, onLogout}) =
             {/* Gráfico 2: Ventas por vendedor */}
             <ChartCard
               title="Ventas por vendedor"
-              subtitle="Comparativa de ingresos entre vendedores"
+              subtitle="Ingresos CLP por canal de venta — incluye venta online"
             >
               <ResponsiveContainer width="100%" height={220}>
                 <LineChart data={vendorData} margin={{top:5,right:20,bottom:5,left:0}}>
                   <CartesianGrid strokeDasharray="3 3" stroke={B.gray100}/>
                   <XAxis dataKey="fecha" tick={{fontSize:10,fill:B.gray400}} interval="preserveStartEnd"/>
                   <YAxis tick={{fontSize:10,fill:B.gray400}} tickFormatter={clpShort} width={60}/>
-                  <Tooltip content={<ChartTooltip formatter={v=>clp(v)}/>}/>
+                  <Tooltip content={<ChartTooltip formatter={(v)=>clp(v)}/>}/>
                   <Legend wrapperStyle={{fontSize:12}}/>
                   {vendors.map((v,i) => (
                     <Line key={v.id} type="monotone" dataKey={v.name}
-                      stroke={VENDOR_COLORS[i%VENDOR_COLORS.length]} strokeWidth={2} dot={false}/>
+                      stroke={VENDOR_COLORS[i%VENDOR_COLORS.length]} strokeWidth={2}
+                      dot={false} activeDot={{r:4}}
+                      strokeDasharray={v.isVirtual ? '5 3' : undefined}/>
                   ))}
                 </LineChart>
               </ResponsiveContainer>
@@ -539,11 +561,13 @@ const AdminDash = ({user, vendors, clients, setVendors, setClients, onLogout}) =
                   <XAxis dataKey="fecha" tick={{fontSize:10,fill:B.gray400}} interval="preserveStartEnd"/>
                   <YAxis yAxisId="left" tick={{fontSize:10,fill:B.gray400}} width={35}/>
                   <YAxis yAxisId="right" orientation="right" tick={{fontSize:10,fill:B.gray400}} tickFormatter={v=>`${v}%`} width={40}/>
-                  <Tooltip content={<ChartTooltip formatter={(v,name)=>name==='churnRate'?`${v}%`:v}/>}/>
+                  <Tooltip content={
+                    <ChartTooltip formatter={(v,name)=>name==='churn %' ? `${v}%` : `${v} cliente${v!==1?'s':''}`}/>
+                  }/>
                   <Legend wrapperStyle={{fontSize:12}}/>
-                  <Line yAxisId="left" type="monotone" dataKey="activos" stroke={B.blue} strokeWidth={2} dot={false} name="activos"/>
-                  <Line yAxisId="left" type="monotone" dataKey="churned" stroke="#dc2626" strokeWidth={2} dot={false} name="churned"/>
-                  <Line yAxisId="right" type="monotone" dataKey="churnRate" stroke="#f97316" strokeWidth={1.5} dot={false} strokeDasharray="4 2" name="churnRate (%)"/>
+                  <Line yAxisId="left"  type="monotone" dataKey="activos"   stroke={B.blue}    strokeWidth={2} dot={false} name="activos"/>
+                  <Line yAxisId="left"  type="monotone" dataKey="churned"   stroke="#dc2626"   strokeWidth={2} dot={false} name="no renovaron"/>
+                  <Line yAxisId="right" type="monotone" dataKey="churnRate" stroke="#f97316"   strokeWidth={1.5} dot={false} strokeDasharray="4 2" name="churn %"/>
                 </LineChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -637,17 +661,42 @@ const AdminDash = ({user, vendors, clients, setVendors, setClients, onLogout}) =
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
               {vendors.map(v=>{
                 const vcs=vc(v.id); const rev=vr(v.id)
-                const ini=v.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()
+                const ini=v.isVirtual ? '🌐' : v.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()
                 return (
-                  <div key={v.id} style={{background:B.white,border:`1px solid ${B.gray200}`,borderRadius:10,padding:'16px 20px',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:12}}>
+                  <div key={v.id} style={{
+                    background:B.white,
+                    border:`1px solid ${v.isVirtual?'rgba(0,102,255,0.2)':B.gray200}`,
+                    borderRadius:10,padding:'16px 20px',
+                    display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:12
+                  }}>
                     <div style={{display:'flex',alignItems:'center',gap:12}}>
-                      <div style={{width:40,height:40,borderRadius:'50%',background:B.blue10,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,fontWeight:700,color:B.blue}}>{ini}</div>
-                      <div><div style={{fontSize:14,fontWeight:700,color:B.black}}>{v.name}</div><div style={{fontSize:12,color:B.gray600}}>{v.email}</div></div>
+                      <div style={{
+                        width:40,height:40,borderRadius:'50%',
+                        background:v.isVirtual?'rgba(0,102,255,0.06)':B.blue10,
+                        display:'flex',alignItems:'center',justifyContent:'center',
+                        fontSize:v.isVirtual?18:14,fontWeight:700,color:B.blue
+                      }}>{ini}</div>
+                      <div>
+                        <div style={{display:'flex',alignItems:'center',gap:8}}>
+                          <div style={{fontSize:14,fontWeight:700,color:B.black}}>{v.name}</div>
+                          {v.isVirtual&&<span style={{fontSize:10,background:'rgba(0,102,255,0.1)',color:B.blue,padding:'1px 6px',borderRadius:10,fontWeight:600,letterSpacing:0.5}}>AUTOMÁTICO</span>}
+                        </div>
+                        <div style={{fontSize:12,color:B.gray600}}>{v.email}</div>
+                      </div>
                     </div>
                     <div style={{display:'flex',gap:24,alignItems:'center'}}>
-                      <div style={{textAlign:'center'}}><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:26,color:B.black}}>{vcs.length}</div><div style={{fontSize:10,color:B.gray400,textTransform:'uppercase',letterSpacing:1}}>Clientes</div></div>
-                      <div style={{textAlign:'center'}}><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:22,color:B.blue}}>{clp(rev)}</div><div style={{fontSize:10,color:B.gray400,textTransform:'uppercase',letterSpacing:1}}>Ingresos</div></div>
-                      <Btn onClick={()=>delV(v.id)} variant="danger" small>Eliminar</Btn>
+                      <div style={{textAlign:'center'}}>
+                        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:26,color:B.black}}>{vcs.length}</div>
+                        <div style={{fontSize:10,color:B.gray400,textTransform:'uppercase',letterSpacing:1}}>Clientes</div>
+                      </div>
+                      <div style={{textAlign:'center'}}>
+                        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:22,color:B.blue}}>{clp(rev)}</div>
+                        <div style={{fontSize:10,color:B.gray400,textTransform:'uppercase',letterSpacing:1}}>Ingresos</div>
+                      </div>
+                      {v.isVirtual
+                        ? <div style={{fontSize:11,color:B.gray400,letterSpacing:0.5}}>No eliminable</div>
+                        : <Btn onClick={()=>delV(v.id)} variant="danger" small>Eliminar</Btn>
+                      }
                     </div>
                   </div>
                 )
@@ -803,11 +852,17 @@ const VendorDash = ({user, clients, setClients, onLogout}) => {
                   <CartesianGrid strokeDasharray="3 3" stroke={B.gray100}/>
                   <XAxis dataKey="fecha" tick={{fontSize:10,fill:B.gray400}} interval="preserveStartEnd"/>
                   <YAxis yAxisId="left" tick={{fontSize:10,fill:B.gray400}} tickFormatter={clpShort} width={60}/>
-                  <YAxis yAxisId="right" orientation="right" tick={{fontSize:10,fill:B.gray400}} width={30}/>
-                  <Tooltip content={<ChartTooltip formatter={(v,name)=>name==='ingresos'?clp(v):`${v} cliente${v!==1?'s':''}`}/>}/>
+                  <YAxis yAxisId="right" orientation="right" tick={{fontSize:10,fill:B.gray400}} tickFormatter={v=>`${v}u`} width={35}/>
+                  <Tooltip content={
+                    <ChartTooltip formatter={(v,name)=>
+                      name==='ingresos CLP' ? clp(v) : `${v} plan${v!==1?'es':''}`
+                    }/>
+                  }/>
                   <Legend wrapperStyle={{fontSize:12}}/>
-                  <Line yAxisId="left" type="monotone" dataKey="ingresos" stroke={B.blue} strokeWidth={2.5} dot={false} name="ingresos" activeDot={{r:5}}/>
-                  <Line yAxisId="right" type="monotone" dataKey="clientes" stroke="#00C6FF" strokeWidth={2} dot={false} name="clientes"/>
+                  <Line yAxisId="left"  type="monotone" dataKey="ingresos" name="ingresos CLP"
+                    stroke={B.blue} strokeWidth={2.5} dot={false} activeDot={{r:5}}/>
+                  <Line yAxisId="right" type="monotone" dataKey="clientes" name="planes vendidos"
+                    stroke="#00C6FF" strokeWidth={2} dot={false} activeDot={{r:4}}/>
                 </LineChart>
               </ResponsiveContainer>
             </ChartCard>

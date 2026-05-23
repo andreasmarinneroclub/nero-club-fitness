@@ -332,6 +332,7 @@ const Landing = ({clients, setClients, onLoginClick}) => {
         <Logo size="sm"/>
         <div style={{display:'flex',alignItems:'center',gap:20}}>
           <span onClick={()=>document.getElementById('planes')?.scrollIntoView({behavior:'smooth'})} style={{fontSize:13,color:'rgba(255,255,255,.45)',letterSpacing:1,textTransform:'uppercase',cursor:'pointer'}}>Planes</span>
+          <span onClick={()=>document.getElementById('maquinaria')?.scrollIntoView({behavior:'smooth'})} style={{fontSize:13,color:'rgba(255,255,255,.45)',letterSpacing:1,textTransform:'uppercase',cursor:'pointer'}}>Maquinaria</span>
           <Btn onClick={onLoginClick} variant="outline" small>Acceso Staff</Btn>
         </div>
       </nav>
@@ -383,6 +384,83 @@ const Landing = ({clients, setClients, onLoginClick}) => {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Maquinaria */}
+      <div id="maquinaria" style={{background:'#0A0A0A',padding:'72px 28px'}}>
+        <div style={{maxWidth:960,margin:'0 auto'}}>
+          <div style={{textAlign:'center',marginBottom:48}}>
+            <div style={{fontSize:11,letterSpacing:3.5,color:'#0066FF',textTransform:'uppercase',fontWeight:500,marginBottom:10}}>Instalaciones</div>
+            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:52,letterSpacing:4,color:'#FFFFFF',lineHeight:.9,marginBottom:16}}>NUESTRA MAQUINARIA</div>
+            <p style={{fontSize:15,color:'rgba(255,255,255,0.45)',maxWidth:480,margin:'0 auto',lineHeight:1.7,fontWeight:300,letterSpacing:0.5}}>
+              Equipamiento Hammer Strength de nivel profesional. La misma maquinaria que usan los atletas de élite.
+            </p>
+          </div>
+
+          {/* Grid de fotos */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:12,marginBottom:40}}>
+            {[
+              {
+                url:'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=80',
+                label:'Press de Pecho ISO-Lateral',
+                tag:'Hammer Strength'
+              },
+              {
+                url:'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=600&q=80',
+                label:'Zona de Pesos Libres',
+                tag:'Área Principal'
+              },
+              {
+                url:'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=600&q=80',
+                label:'Máquinas de Espalda',
+                tag:'Hammer Strength'
+              },
+              {
+                url:'https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=600&q=80',
+                label:'Sala Completa',
+                tag:'Sin Masificación'
+              },
+            ].map((item,i) => (
+              <div key={i}
+                style={{position:'relative',borderRadius:10,overflow:'hidden',aspectRatio:'4/3',cursor:'pointer',border:'1px solid rgba(255,255,255,0.06)'}}
+                onMouseOver={e=>{e.currentTarget.querySelector('.overlay').style.opacity='1'}}
+                onMouseOut={e=>{e.currentTarget.querySelector('.overlay').style.opacity='0'}}>
+                <img
+                  src={item.url}
+                  alt={item.label}
+                  style={{width:'100%',height:'100%',objectFit:'cover',display:'block',transition:'transform 0.4s'}}
+                  onMouseOver={e=>e.currentTarget.style.transform='scale(1.05)'}
+                  onMouseOut={e=>e.currentTarget.style.transform='scale(1)'}
+                />
+                {/* Overlay */}
+                <div className="overlay" style={{position:'absolute',inset:0,background:'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.1) 60%)',opacity:0,transition:'opacity 0.3s',display:'flex',flexDirection:'column',justifyContent:'flex-end',padding:'20px 18px'}}>
+                  <div style={{fontSize:10,letterSpacing:2,color:'#0066FF',textTransform:'uppercase',marginBottom:4,fontWeight:600}}>{item.tag}</div>
+                  <div style={{fontSize:15,fontWeight:600,color:'#FFFFFF',letterSpacing:0.5}}>{item.label}</div>
+                </div>
+                {/* Badge siempre visible */}
+                <div style={{position:'absolute',top:12,left:12,background:'rgba(0,0,0,0.7)',backdropFilter:'blur(6px)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:20,padding:'3px 10px',fontSize:10,color:'rgba(255,255,255,0.7)',letterSpacing:1,textTransform:'uppercase'}}>
+                  {item.tag}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA */}
+          <div style={{textAlign:'center'}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:16,marginBottom:24}}>
+              <div style={{width:40,height:1,background:'rgba(255,255,255,0.1)'}}/>
+              <span style={{fontSize:12,color:'rgba(255,255,255,0.3)',letterSpacing:2,textTransform:'uppercase'}}>Próximamente fotos reales de nuestras instalaciones</span>
+              <div style={{width:40,height:1,background:'rgba(255,255,255,0.1)'}}/>
+            </div>
+            <button
+              onClick={()=>document.getElementById('signup')?.scrollIntoView({behavior:'smooth'})}
+              style={{background:'transparent',border:'1px solid rgba(0,102,255,0.5)',color:'#0066FF',padding:'12px 32px',borderRadius:6,fontFamily:"'Barlow Condensed',sans-serif",fontSize:14,fontWeight:600,letterSpacing:2,textTransform:'uppercase',cursor:'pointer',transition:'all 0.2s'}}
+              onMouseOver={e=>{e.currentTarget.style.background='#0066FF';e.currentTarget.style.color='#fff'}}
+              onMouseOut={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.color='#0066FF'}}>
+              Quiero entrenar aquí →
+            </button>
+          </div>
         </div>
       </div>
 

@@ -288,19 +288,42 @@ const Landing = ({clients, setClients, onLoginClick}) => {
     if (!form.name||!form.email||!selPlan) return
     setBusy(true)
 
-    // 🔌 SUPABASE:
-    // const { data: authData } = await supabase.auth.signUp({ email: form.email, password: uid() })
-    // await supabase.from('clients').insert({ id: authData.user.id, ...form, plan_id: selPlan, start_date: TODAY, vendor_id: 'online' })
-    // await supabase.functions.invoke('welcome-email', { body: { clientName: form.name, clientEmail: form.email, planName: plan(selPlan)?.name, endDate: ... } })
+    const selectedPlan = plan(selPlan)
+    const endDt = selectedPlan
+      ? (() => { const d=new Date(); d.setMonth(d.getMonth()+selectedPlan.duration); return d.toLocaleDateString('es-CL') })()
+      : '—'
 
-    await new Promise(r=>setTimeout(r,800))
+    // Registrar en estado local (modo demo)
     setClients(p=>[...p,{
       id:uid(), ...form,
       age:parseInt(form.age)||0, height:parseInt(form.height)||0, weight:parseFloat(form.weight)||0,
-      planId:selPlan, startDate:TODAY,
-      vendorId:'online', // siempre 'online' para inscripciones web
+      planId:selPlan, startDate:TODAY, vendorId:'online',
     }])
-    setSubmitted(true); setBusy(false)
+
+    // Llamada REAL a Edge Function welcome-email
+    try {
+      await fetch(
+        'https://ksfjhrlajwpaulyyuqpu.supabase.co/functions/v1/welcome-email',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzamhybGFqd3BhdWx5eXVxcHUiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NzY2MDExNiwiZXhwIjoyMDYzMjM2MTE2fQ.6u0bnFmKuRSiocZzXCvOF_MEu7srgq7DRDMQR-bfcMs',
+          },
+          body: JSON.stringify({
+            clientName:  form.name,
+            clientEmail: form.email,
+            planName:    selectedPlan?.name || 'Nero Club Fitness',
+            endDate:     endDt,
+          }),
+        }
+      )
+    } catch (err) {
+      console.error('Error enviando email de bienvenida:', err)
+    }
+
+    setSubmitted(true)
+    setBusy(false)
   }
 
   return (
@@ -731,11 +754,43 @@ const VendorDash = ({user, clients, setClients, onLogout}) => {
   const submit = async () => {
     if (!form.name||!form.email||!form.planId) { setErr('Nombre, email y plan son obligatorios'); return }
     setErr(''); setBusy(true)
-    // 🔌 SUPABASE:
-    // await supabase.from('clients').insert({ name:form.name, email:form.email, ... plan_id: form.planId, vendor_id: user.id })
-    await new Promise(r=>setTimeout(r,700))
-    setClients(p=>[...p,{id:uid(),name:form.name,email:form.email,age:parseInt(form.age)||0,height:parseInt(form.height)||0,weight:parseFloat(form.weight)||0,goal:form.goal,planId:parseInt(form.planId),startDate:TODAY,vendorId:user?.id}])
-    setOk(true); setBusy(false)
+
+    const selectedPlan = plan(parseInt(form.planId))
+    const endDt = selectedPlan
+      ? (() => { const d=new Date(); d.setMonth(d.getMonth()+selectedPlan.duration); return d.toLocaleDateString('es-CL') })()
+      : '—'
+
+    // Registrar en estado local (modo demo)
+    setClients(p=>[...p,{
+      id:uid(), name:form.name, email:form.email,
+      age:parseInt(form.age)||0, height:parseInt(form.height)||0,
+      weight:parseFloat(form.weight)||0, goal:form.goal,
+      planId:parseInt(form.planId), startDate:TODAY, vendorId:user?.id,
+    }])
+
+    // Llamada REAL a Edge Function welcome-email
+    try {
+      await fetch(
+        'https://ksfjhrlajwpaulyyuqpu.supabase.co/functions/v1/welcome-email',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzamhybGFqd3BhdWx5eXVxcHUiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NzY2MDExNiwiZXhwIjoyMDYzMjM2MTE2fQ.6u0bnFmKuRSiocZzXCvOF_MEu7srgq7DRDMQR-bfcMs',
+          },
+          body: JSON.stringify({
+            clientName:  form.name,
+            clientEmail: form.email,
+            planName:    selectedPlan?.name || 'Nero Club Fitness',
+            endDate:     endDt,
+          }),
+        }
+      )
+    } catch (err) {
+      console.error('Error enviando email de bienvenida:', err)
+    }
+
+    setBusy(false); setOk(true)
     setTimeout(()=>{setOk(false);setForm({name:'',email:'',age:'',height:'',weight:'',goal:GOALS[0],planId:''});setTab('sales')},2000)
   }
 

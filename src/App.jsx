@@ -277,6 +277,34 @@ const LoginModal = ({onLogin, onClose}) => {
 // LANDING PAGE
 // ══════════════════════════════════════════════════════════════════════════════
 
+// ── FAQ Accordion Item ───────────────────────────────────────────────────────
+const FaqItem = ({q, a}) => {
+  const [open, setOpen] = React.useState(false)
+  return (
+    <div style={{borderBottom:'1px solid rgba(255,255,255,.07)',padding:'20px 0'}}>
+      <button onClick={()=>setOpen(p=>!p)} style={{
+        width:'100%',background:'none',border:'none',cursor:'pointer',
+        display:'flex',justifyContent:'space-between',alignItems:'center',gap:16,
+        textAlign:'left',padding:0,
+      }}>
+        <span style={{fontSize:15,fontWeight:600,color:'#fff',letterSpacing:.3,lineHeight:1.4}}>{q}</span>
+        <span style={{
+          fontSize:18,color:'#0066FF',flexShrink:0,
+          transform:open?'rotate(45deg)':'rotate(0deg)',
+          transition:'transform 0.25s',display:'block',lineHeight:1,
+        }}>+</span>
+      </button>
+      <div style={{
+        maxHeight:open?'200px':'0',overflow:'hidden',
+        transition:'max-height 0.3s ease, opacity 0.3s ease',
+        opacity:open?1:0,
+      }}>
+        <p style={{fontSize:14,color:'rgba(255,255,255,.55)',lineHeight:1.75,margin:'14px 0 0',fontWeight:300}}>{a}</p>
+      </div>
+    </div>
+  )
+}
+
 const Landing = ({clients, setClients, onLoginClick}) => {
   const [selPlan,  setSelPlan]  = useState(null)
   const [form,     setForm]     = useState({name:'',email:'',age:'',height:'',weight:'',goal:GOALS[0]})
@@ -331,8 +359,13 @@ const Landing = ({clients, setClients, onLoginClick}) => {
       <nav style={{background:'rgba(10,10,10,.96)',borderBottom:'1px solid rgba(255,255,255,.06)',padding:'0 28px',display:'flex',alignItems:'center',justifyContent:'space-between',height:58,position:'sticky',top:0,zIndex:10}}>
         <Logo size="sm"/>
         <div style={{display:'flex',alignItems:'center',gap:20}}>
-          <span onClick={()=>document.getElementById('planes')?.scrollIntoView({behavior:'smooth'})} style={{fontSize:13,color:'rgba(255,255,255,.45)',letterSpacing:1,textTransform:'uppercase',cursor:'pointer'}}>Planes</span>
-          <span onClick={()=>document.getElementById('maquinaria')?.scrollIntoView({behavior:'smooth'})} style={{fontSize:13,color:'rgba(255,255,255,.45)',letterSpacing:1,textTransform:'uppercase',cursor:'pointer'}}>Maquinaria</span>
+          {[['planes','Planes'],['maquinaria','Maquinaria'],['opiniones','Opiniones'],['app','App'],['faq','FAQ']].map(([id,label])=>(
+            <span key={id} onClick={()=>document.getElementById(id)?.scrollIntoView({behavior:'smooth'})}
+              style={{fontSize:13,color:'rgba(255,255,255,.45)',letterSpacing:1,textTransform:'uppercase',cursor:'pointer',transition:'color .15s'}}
+              onMouseOver={e=>e.target.style.color='#0066FF'} onMouseOut={e=>e.target.style.color='rgba(255,255,255,.45)'}>
+              {label}
+            </span>
+          ))}
           <Btn onClick={onLoginClick} variant="outline" small>Acceso Staff</Btn>
         </div>
       </nav>
@@ -521,6 +554,132 @@ const Landing = ({clients, setClients, onLoginClick}) => {
           )}
         </div>
       </div>
+      {/* ── OPINIONES ── */}
+      <div id="opiniones" style={{background:'#0D0D0D',padding:'72px 28px',borderTop:'1px solid rgba(255,255,255,.06)'}}>
+        <div style={{maxWidth:960,margin:'0 auto'}}>
+          <div style={{textAlign:'center',marginBottom:52}}>
+            <div style={{fontSize:11,letterSpacing:3.5,color:'#0066FF',textTransform:'uppercase',fontWeight:500,marginBottom:10}}>Testimonios</div>
+            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:52,letterSpacing:4,color:'#FFFFFF',lineHeight:.9}}>LO QUE DICEN NUESTROS SOCIOS</div>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))',gap:16}}>
+            {[
+              {name:'Matías R.',plan:'Plan Anual',stars:5,text:'El mejor gimnasio de Santiago. Sin filas, sin esperas. Entreno cuando quiero y la maquinaria Hammer es de primer nivel. 100% recomendado.'},
+              {name:'Sofía H.',plan:'Plan Semestral',stars:5,text:'Me encanta poder entrar a cualquier hora. Las instalaciones siempre limpias y el ambiente es increíble. Llevo 6 meses y no lo cambio por nada.'},
+              {name:'Tomás F.',plan:'Plan Anual',stars:5,text:'Vine de un gimnasio masificado y la diferencia es brutal. Acá siempre hay máquinas disponibles y el espacio es enorme. Vale cada peso.'},
+              {name:'Camila M.',plan:'Plan Trimestral',stars:5,text:'La inscripción fue súper fácil, en minutos estaba lista. El acceso 24/7 es un cambio de vida para quienes tenemos horarios complicados.'},
+            ].map((r,i)=>(
+              <div key={i} style={{background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.07)',borderRadius:12,padding:'24px 22px',position:'relative'}}>
+                {/* Comilla decorativa */}
+                <div style={{fontSize:48,color:'#0066FF',opacity:.25,lineHeight:.8,marginBottom:12,fontFamily:'Georgia,serif'}}>"</div>
+                <p style={{fontSize:14,color:'rgba(255,255,255,.7)',lineHeight:1.7,margin:'0 0 18px',fontWeight:300}}>{r.text}</p>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',borderTop:'1px solid rgba(255,255,255,.06)',paddingTop:14}}>
+                  <div>
+                    <div style={{fontSize:13,fontWeight:600,color:'#fff',letterSpacing:.5}}>{r.name}</div>
+                    <div style={{fontSize:11,color:'#0066FF',letterSpacing:1,textTransform:'uppercase',marginTop:2}}>{r.plan}</div>
+                  </div>
+                  <div style={{color:'#0066FF',fontSize:14,letterSpacing:1}}>{'★'.repeat(r.stars)}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Rating global */}
+          <div style={{textAlign:'center',marginTop:40,display:'flex',alignItems:'center',justifyContent:'center',gap:16}}>
+            <div style={{width:40,height:1,background:'rgba(255,255,255,.1)'}}/>
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              <span style={{fontSize:28,fontFamily:"'Bebas Neue',sans-serif",color:'#fff',letterSpacing:2}}>5.0</span>
+              <span style={{color:'#0066FF',fontSize:16,letterSpacing:2}}>★★★★★</span>
+              <span style={{fontSize:12,color:'rgba(255,255,255,.35)',letterSpacing:1}}>en Google</span>
+            </div>
+            <div style={{width:40,height:1,background:'rgba(255,255,255,.1)'}}/>
+          </div>
+        </div>
+      </div>
+
+      {/* ── APP ── */}
+      <div id="app" style={{background:'#0A0A0A',padding:'72px 28px',borderTop:'1px solid rgba(255,255,255,.06)'}}>
+        <div style={{maxWidth:960,margin:'0 auto',display:'grid',gridTemplateColumns:'1fr 1fr',gap:48,alignItems:'center'}}>
+          {/* Texto */}
+          <div>
+            <div style={{fontSize:11,letterSpacing:3.5,color:'#0066FF',textTransform:'uppercase',fontWeight:500,marginBottom:12}}>Próximamente</div>
+            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:52,letterSpacing:3,color:'#FFFFFF',lineHeight:.9,marginBottom:20}}>NERO CLUB<br/>EN TU BOLSILLO</div>
+            <p style={{fontSize:15,color:'rgba(255,255,255,.55)',lineHeight:1.8,fontWeight:300,marginBottom:28}}>
+              Controla tu membresía, reserva turnos, accede con QR y sigue tu progreso desde la app oficial de Nero Club. Disponible próximamente en iOS y Android.
+            </p>
+            <div style={{display:'flex',flexDirection:'column',gap:12,marginBottom:32}}>
+              {[
+                ['📱','Acceso QR al gimnasio'],
+                ['📊','Seguimiento de tu progreso'],
+                ['🕐','Historial de visitas'],
+                ['💳','Gestión de tu membresía'],
+              ].map(([ico,txt])=>(
+                <div key={txt} style={{display:'flex',alignItems:'center',gap:12}}>
+                  <span style={{fontSize:16}}>{ico}</span>
+                  <span style={{fontSize:14,color:'rgba(255,255,255,.65)',letterSpacing:.3}}>{txt}</span>
+                </div>
+              ))}
+            </div>
+            {/* Botones de descarga (próximamente) */}
+            <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+              {['App Store','Google Play'].map(store=>(
+                <div key={store} style={{border:'1px solid rgba(255,255,255,.15)',borderRadius:8,padding:'10px 20px',display:'flex',alignItems:'center',gap:8,opacity:.5,cursor:'not-allowed'}}>
+                  <span style={{fontSize:18}}>{store==='App Store'?'🍎':'▶'}</span>
+                  <div>
+                    <div style={{fontSize:9,color:'rgba(255,255,255,.4)',letterSpacing:1,textTransform:'uppercase'}}>Próximamente en</div>
+                    <div style={{fontSize:13,color:'#fff',fontWeight:600,letterSpacing:.5}}>{store}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Mockup visual */}
+          <div style={{display:'flex',justifyContent:'center',alignItems:'center'}}>
+            <div style={{width:220,borderRadius:32,background:'linear-gradient(135deg,#0A0A0A 0%,#0D1829 100%)',border:'1px solid rgba(0,102,255,.3)',padding:'24px 18px',boxShadow:'0 0 60px rgba(0,102,255,.15)',position:'relative'}}>
+              {/* Notch */}
+              <div style={{width:60,height:6,background:'rgba(255,255,255,.08)',borderRadius:3,margin:'0 auto 20px'}}/>
+              {/* Logo en app */}
+              <div style={{textAlign:'center',marginBottom:16}}>
+                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:22,color:'#fff',letterSpacing:4}}>NERO</div>
+                <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:9,color:'rgba(255,255,255,.4)',letterSpacing:4,textTransform:'uppercase'}}>CLUB FITNESS</div>
+              </div>
+              {/* Stats mockup */}
+              {[['Visitas este mes','12'],['Plan activo','Semestral'],['Vence','23 Nov 2025']].map(([l,v])=>(
+                <div key={l} style={{background:'rgba(255,255,255,.04)',borderRadius:8,padding:'10px 12px',marginBottom:8}}>
+                  <div style={{fontSize:9,color:'rgba(255,255,255,.35)',letterSpacing:1,textTransform:'uppercase',marginBottom:3}}>{l}</div>
+                  <div style={{fontSize:13,color:'#fff',fontWeight:600}}>{v}</div>
+                </div>
+              ))}
+              {/* Botón QR */}
+              <div style={{background:'#0066FF',borderRadius:8,padding:'10px',textAlign:'center',marginTop:12}}>
+                <div style={{fontSize:11,color:'#fff',fontWeight:600,letterSpacing:1,textTransform:'uppercase'}}>Mostrar QR de acceso</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── FAQ ── */}
+      <div id="faq" style={{background:'#0D0D0D',padding:'72px 28px',borderTop:'1px solid rgba(255,255,255,.06)'}}>
+        <div style={{maxWidth:720,margin:'0 auto'}}>
+          <div style={{textAlign:'center',marginBottom:52}}>
+            <div style={{fontSize:11,letterSpacing:3.5,color:'#0066FF',textTransform:'uppercase',fontWeight:500,marginBottom:10}}>Preguntas frecuentes</div>
+            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:52,letterSpacing:4,color:'#FFFFFF',lineHeight:.9}}>FAQ</div>
+          </div>
+          {[
+            {q:'¿Cuál es el horario del gimnasio?',a:'Nero Club tiene acceso 24/7 los 365 días del año. Tu cuerpo no tiene horario fijo y tu gimnasio tampoco.'},
+            {q:'¿Hay permanencia en los planes?',a:'No. Todos nuestros planes son sin permanencia. Puedes cambiar o cancelar cuando quieras sin penalizaciones.'},
+            {q:'¿Cómo me inscribo?',a:'100% online desde esta página. Elige tu plan, completa tus datos y listo. El proceso tarda menos de 2 minutos.'},
+            {q:'¿Qué maquinaria tienen?',a:'Contamos con maquinaria Hammer Strength de nivel profesional: press, jalones, remos, piernas y mucho más. Todo en más de 1.000 m².'},
+            {q:'¿Puedo congelar mi membresía?',a:'Sí. Puedes solicitar una congelación de tu membresía por motivos justificados. Contáctanos a través del formulario de contacto.'},
+            {q:'¿Hay duchas y vestuarios?',a:'Sí, contamos con vestuarios completos con duchas, taquillas y todo lo necesario para que vengas antes o después del trabajo.'},
+          ].map((item,i)=>(<FaqItem key={i} q={item.q} a={item.a}/>))}
+          {/* CTA final */}
+          <div style={{textAlign:'center',marginTop:48,padding:'32px',background:'rgba(0,102,255,.05)',border:'1px solid rgba(0,102,255,.15)',borderRadius:14}}>
+            <div style={{fontSize:14,color:'rgba(255,255,255,.6)',marginBottom:12}}>¿Tienes otra pregunta? Escríbenos</div>
+            <a href="mailto:hola@neroclub.cl" style={{color:'#0066FF',fontSize:15,fontWeight:600,letterSpacing:1,textDecoration:'none'}}>hola@neroclub.cl</a>
+          </div>
+        </div>
+      </div>
+
       <div style={{padding:'24px 28px',borderTop:'1px solid rgba(255,255,255,.06)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
         <Logo size="sm"/>
         <span style={{fontSize:12,color:'rgba(255,255,255,.25)'}}>© 2025 Nero Club Fitness · Santiago, Chile</span>

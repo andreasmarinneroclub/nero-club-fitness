@@ -58,7 +58,7 @@ const ONLINE_VENDOR = { id:'online', name:'Venta Online', email:'sitio web', isV
 
 // Demo credentials — usados SOLO para modo mock, nunca mostrados en el formulario
 const _DEMO = {
-  admin:   { email:'admin@neroclub.cl',   password:'admin123',   id:'admin', name:'Carlos Nero', role:'admin' },
+  admin:   { email:'andreasmarin@neroclub.cl', password:'Constanza1812', id:'admin', name:'Andrea Marín', role:'admin' },
   vendors: [
     { id:'v1', name:'Diego Morales',  email:'diego@neroclub.cl', password:'vendor123' },
     { id:'v2', name:'Valentina Cruz', email:'vale@neroclub.cl',  password:'vendor456' },
@@ -331,7 +331,7 @@ const Landing = ({clients, setClients, onLoginClick}) => {
       <nav style={{background:'rgba(10,10,10,.96)',borderBottom:'1px solid rgba(255,255,255,.06)',padding:'0 28px',display:'flex',alignItems:'center',justifyContent:'space-between',height:58,position:'sticky',top:0,zIndex:10}}>
         <Logo size="sm"/>
         <div style={{display:'flex',alignItems:'center',gap:20}}>
-          <span style={{fontSize:13,color:'rgba(255,255,255,.45)',letterSpacing:1,textTransform:'uppercase',cursor:'pointer'}}>Planes</span>
+          <span onClick={()=>document.getElementById('planes')?.scrollIntoView({behavior:'smooth'})} style={{fontSize:13,color:'rgba(255,255,255,.45)',letterSpacing:1,textTransform:'uppercase',cursor:'pointer'}}>Planes</span>
           <Btn onClick={onLoginClick} variant="outline" small>Acceso Staff</Btn>
         </div>
       </nav>
@@ -348,8 +348,8 @@ const Landing = ({clients, setClients, onLoginClick}) => {
           <div style={{width:32,height:1,background:B.blue}}/>
         </div>
         <div style={{display:'flex',gap:12}}>
-          <Btn style={{padding:'14px 28px',fontSize:15,letterSpacing:2}}>Ver Planes →</Btn>
-          <Btn variant="outline" style={{padding:'14px 28px',fontSize:15,letterSpacing:2}}>Inscribirme</Btn>
+          <Btn onClick={()=>document.getElementById('planes')?.scrollIntoView({behavior:'smooth'})} style={{padding:'14px 28px',fontSize:15,letterSpacing:2}}>Ver Planes →</Btn>
+          <Btn onClick={()=>document.getElementById('signup')?.scrollIntoView({behavior:'smooth'})} variant="outline" style={{padding:'14px 28px',fontSize:15,letterSpacing:2}}>Inscribirme</Btn>
         </div>
         <div style={{display:'flex',gap:32,justifyContent:'center',marginTop:32,paddingTop:24,borderTop:'1px solid rgba(255,255,255,.06)'}}>
           {[['24/7','Acceso'],['+1.000m²','Instalaciones'],['0','Masificación']].map(([v,l])=>(
@@ -362,7 +362,7 @@ const Landing = ({clients, setClients, onLoginClick}) => {
       </div>
 
       {/* Planes */}
-      <div style={{padding:'48px 28px',maxWidth:960,margin:'0 auto'}}>
+      <div id="planes" style={{padding:'48px 28px',maxWidth:960,margin:'0 auto'}}>
         <div style={{textAlign:'center',marginBottom:36}}>
           <div style={{fontSize:10,letterSpacing:3,color:B.blue,textTransform:'uppercase',marginBottom:8}}>Membresías</div>
           <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:48,letterSpacing:4,color:B.white,lineHeight:.9}}>ELIGE TU PLAN</div>
@@ -387,7 +387,7 @@ const Landing = ({clients, setClients, onLoginClick}) => {
       </div>
 
       {/* Formulario */}
-      <div style={{padding:'20px 28px 60px',maxWidth:580,margin:'0 auto'}}>
+      <div id="signup" style={{padding:'20px 28px 60px',maxWidth:580,margin:'0 auto'}}>
         <div style={{background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.08)',borderRadius:14,padding:'32px'}}>
           {submitted ? (
             <div style={{textAlign:'center',padding:'32px 0'}}>

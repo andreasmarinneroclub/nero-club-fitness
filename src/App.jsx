@@ -94,9 +94,9 @@ const isActive = c => { const p=plan(c.planId); return p ? endDate(c.startDate,p
 
 const NeroMark = ({size=28,c1='#FFF',c2='#0066FF'}) => (
   <svg width={Math.round(size*.7)} height={size} viewBox="0 0 28 40" style={{flexShrink:0}}>
-    <polygon points="0,0 8,0 8,40 0,40" fill={c1}/>
-    <polygon points="8,0 16,0 20,40 12,40" fill={c2}/>
-    <polygon points="20,0 28,0 28,40 20,40" fill={c1}/>
+    <polygon points="0,0 7,0 7,40 0,40"   fill={c1}/>
+    <polygon points="7,0 14,0 21,40 14,40" fill={c2}/>
+    <polygon points="21,0 28,0 28,40 21,40" fill={c1}/>
   </svg>
 )
 
@@ -339,7 +339,21 @@ const Landing = ({clients, setClients, onLoginClick}) => {
 
       {/* Hero */}
       <div style={{minHeight:420,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',textAlign:'center',padding:'60px 28px',position:'relative',overflow:'hidden'}}>
-        <div style={{position:'absolute',width:500,height:500,borderRadius:'50%',background:'radial-gradient(circle,rgba(0,102,255,.1) 0%,transparent 65%)',top:'50%',left:'50%',transform:'translate(-50%,-50%)',pointerEvents:'none'}}/>
+        {/* Foto fondo con tinte azul oscuro */}
+        <div style={{position:'absolute',inset:0,zIndex:0,pointerEvents:'none'}}>
+          <img
+            src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1400&q=80"
+            alt="Gimnasio Nero Club"
+            style={{width:'100%',height:'100%',objectFit:'cover',objectPosition:'center',opacity:.18}}
+          />
+          {/* Capa de tinte: negro base + gradiente azul sutil */}
+          <div style={{position:'absolute',inset:0,background:'linear-gradient(135deg, rgba(0,10,30,0.92) 0%, rgba(0,40,100,0.55) 50%, rgba(0,10,30,0.92) 100%)'}}/>
+          {/* Viñeta perimetral */}
+          <div style={{position:'absolute',inset:0,background:'radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.7) 100%)'}}/>
+        </div>
+        {/* Glow azul central */}
+        <div style={{position:'absolute',width:500,height:500,borderRadius:'50%',background:'radial-gradient(circle,rgba(0,102,255,.15) 0%,transparent 65%)',top:'50%',left:'50%',transform:'translate(-50%,-50%)',pointerEvents:'none',zIndex:1}}/>
+        <div style={{position:'relative',zIndex:2,display:'flex',flexDirection:'column',alignItems:'center'}}>
         <NeroMark size={52} c1={B.white} c2={B.blue}/>
         <div style={{marginTop:18,fontFamily:"'Bebas Neue',sans-serif",fontSize:'clamp(60px,10vw,100px)',letterSpacing:8,lineHeight:.88,color:B.white}}>NERO<br/>CLUB</div>
         <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:13,letterSpacing:10,color:'rgba(255,255,255,.3)',fontWeight:300,textTransform:'uppercase',marginTop:8}}>FITNESS</div>
@@ -352,7 +366,8 @@ const Landing = ({clients, setClients, onLoginClick}) => {
           <Btn onClick={()=>document.getElementById('planes')?.scrollIntoView({behavior:'smooth'})} style={{padding:'14px 28px',fontSize:15,letterSpacing:2}}>Ver Planes →</Btn>
           <Btn onClick={()=>document.getElementById('signup')?.scrollIntoView({behavior:'smooth'})} variant="outline" style={{padding:'14px 28px',fontSize:15,letterSpacing:2}}>Inscribirme</Btn>
         </div>
-        <div style={{display:'flex',gap:32,justifyContent:'center',marginTop:32,paddingTop:24,borderTop:'1px solid rgba(255,255,255,.06)'}}>
+        </div>
+        <div style={{position:'relative',zIndex:2,display:'flex',gap:32,justifyContent:'center',marginTop:32,paddingTop:24,borderTop:'1px solid rgba(255,255,255,.08)',width:'100%',maxWidth:400}}>
           {[['24/7','Acceso'],['+1.000m²','Instalaciones'],['0','Masificación']].map(([v,l])=>(
             <div key={l} style={{textAlign:'center'}}>
               <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:34,color:B.blue}}>{v}</div>

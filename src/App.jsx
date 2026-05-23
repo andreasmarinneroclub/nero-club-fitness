@@ -104,12 +104,12 @@ const Logo = ({dark=false,size='md'}) => {
   const [mk,fs]={sm:[15,26],md:[20,38],lg:[30,56]}[size]||[20,38]
   const fg=dark?B.black:B.white
   return (
-    <div style={{display:'flex',alignItems:'center',gap:9}}>
-      <NeroMark size={mk} c1={fg} c2={B.blue}/>
-      <div>
-        <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:fs,color:fg,letterSpacing:4,lineHeight:.9}}>NERO</div>
-        <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:fs*.22,color:dark?'rgba(0,0,0,.4)':'rgba(255,255,255,.45)',letterSpacing:5,textTransform:'uppercase',fontWeight:300,marginTop:2}}>CLUB FITNESS</div>
+    <div style={{display:'flex',flexDirection:'column',alignItems:'flex-start'}}>
+      <div style={{display:'flex',alignItems:'center',gap:7,lineHeight:1}}>
+        <NeroMark size={mk} c1={fg} c2={B.blue}/>
+        <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:fs,color:fg,letterSpacing:4,lineHeight:1}}>NERO</div>
       </div>
+      <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:fs*.22,color:dark?'rgba(0,0,0,.4)':'rgba(255,255,255,.45)',letterSpacing:5,textTransform:'uppercase',fontWeight:300,marginTop:1}}>CLUB FITNESS</div>
     </div>
   )
 }

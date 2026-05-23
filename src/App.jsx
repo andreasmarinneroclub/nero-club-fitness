@@ -279,7 +279,7 @@ const LoginModal = ({onLogin, onClose}) => {
 
 // ── FAQ Accordion Item ───────────────────────────────────────────────────────
 const FaqItem = ({q, a}) => {
-  const [open, setOpen] = React.useState(false)
+  const [open, setOpen] = useState(false)
   return (
     <div style={{borderBottom:'1px solid rgba(255,255,255,.07)',padding:'20px 0'}}>
       <button onClick={()=>setOpen(p=>!p)} style={{
